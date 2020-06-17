@@ -200,7 +200,6 @@ public class Rig
         body[2] = new SubRig(R_Leg_Hip_3D, R_Leg_Knees_3D, R_Leg_Ankles_3D);
 
         return body;
-
     }
 
 
@@ -245,6 +244,14 @@ public class Rig
             rend.SetPosition(3, sub_rig[3].Root_2D);
             rend.SetPosition(4, sub_rig[0].Root_2D);
         }
+    }
+
+
+    public void DrawSphere(SubRig sub_rig, GameObject A, GameObject B, GameObject C)
+    {
+        A.transform.localPosition = sub_rig.Root_3D;
+        B.transform.localPosition = sub_rig.Center_3D;
+        C.transform.localPosition = sub_rig.Destintion_3D;
     }
 
 

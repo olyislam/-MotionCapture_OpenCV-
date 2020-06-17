@@ -1,7 +1,6 @@
 ﻿using OpenCvSharp;
 using OpenCvSharp.Dnn;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -41,8 +40,8 @@ public class MotionData : MonoBehaviour
     private const int inputImageSize = 224;
     private const int JointNum = 24;
     private const int HeatMapCol = 14;
-    private const int HeatMapCol_Squared = 14 * 14;
-    private const int HeatMapCol_Cube = 14 * 14 * 14;
+    private const int HeatMapCol_Squared = HeatMapCol * HeatMapCol;
+    private const int HeatMapCol_Cube = HeatMapCol * HeatMapCol * HeatMapCol;
 
     char[] heatMap2Dbuf = new char[JointNum * HeatMapCol_Squared * 4];
     float[] heatMap2D = new float[JointNum * HeatMapCol_Squared];
@@ -127,7 +126,7 @@ public class MotionData : MonoBehaviour
         videoPlayer.renderMode = VideoRenderMode.RenderTexture;
         videoPlayer.targetTexture = videoTexture;
 
-        GameObject videoScreen = GameObject.Find("VideoScreen");
+        GameObject videoScreen = GameObject.Find("InputScreen");
         RawImage screen = videoScreen.GetComponent<RawImage>();
         var sd = screen.GetComponent<RectTransform>();
         sd.sizeDelta = new Vector2(videoScreenWidth, (int)(videoScreenWidth * videoPlayer.clip.height / videoPlayer.clip.width));
@@ -209,10 +208,12 @@ public class MotionData : MonoBehaviour
 
             if (jointPoint.Child != null)
             {
-                jointPoint.Inverse = GetInverse(jointPoint, jointPoint.Child);
+                jointPoint.Inverse = Quaternion.Inverse(Quaternion.LookRotation(jointPoint.Transform.position - jointPoint.Transform.position));
             }
         }
+
         initPosition = jointPoints[PositionIndex.hip.Int()].Transform.position;
+
         var forward = TriangleNormal(jointPoints[PositionIndex.hip.Int()].Transform.position, jointPoints[PositionIndex.lThighBend.Int()].Transform.position, jointPoints[PositionIndex.rThighBend.Int()].Transform.position);
         jointPoints[PositionIndex.hip.Int()].Inverse = Quaternion.Inverse(Quaternion.LookRotation(forward));
 
@@ -227,10 +228,7 @@ public class MotionData : MonoBehaviour
         jointPoints[PositionIndex.rHand.Int()].InitRotation = jointPoints[PositionIndex.rHand.Int()].Transform.rotation;
         jointPoints[PositionIndex.rHand.Int()].Inverse = Quaternion.Inverse(Quaternion.LookRotation(jointPoints[PositionIndex.rThumb2.Int()].Transform.position - jointPoints[PositionIndex.rMid1.Int()].Transform.position));
     }
-    private Quaternion GetInverse(JointPoint p1, JointPoint p2)
-    {
-        return Quaternion.Inverse(Quaternion.LookRotation(p1.Transform.position - p2.Transform.position));
-    }
+
 
     private Vector3 TriangleNormal(Vector3 a, Vector3 b, Vector3 c)
     {
@@ -293,22 +291,16 @@ public class MotionData : MonoBehaviour
     /// <returns></returns>
     protected Mat GetTextureMat(Texture2D texture)
     {
-        float bbLeft = clipRect.xMin;
-        float bbRight = clipRect.xMax;
-        float bbTop = clipRect.yMin;
-        float bbBottom = clipRect.yMax;
-        float bbWidth = clipRect.width;
-        float bbHeight = clipRect.height;
+        float left = clipRect.xMin;
+        float right = clipRect.xMax;
+        float top = clipRect.yMin;
+        float bottom = clipRect.yMax;
 
-        //float videoLongSide = (videoWidth > videoHeight) ? videoWidth : videoHeight;
+        
         float videoShortSide = (videoWidth > videoHeight) ? videoHeight : videoWidth;
         float aspectWidth = videoWidth / videoShortSide;
         float aspectHeight = videoHeight / videoShortSide;
 
-        float left = bbLeft;
-        float right = bbRight;
-        float top = bbTop;
-        float bottom = bbBottom;
 
         left /= videoShortSide;
         right /= videoShortSide;
@@ -335,11 +327,13 @@ public class MotionData : MonoBehaviour
 
         // Convrt to Mat
         Color32[] c = dst.GetPixels32();
-        var m = new Mat(224, 224, MatType.CV_8UC3);
-        var videoSourceImageData = new Vec3b[224 * 224];
-        for (var i = 0; i < 224; i++)
+        var m = new Mat(dst.width, dst.height, MatType.CV_8UC3);
+        var videoSourceImageData = new Vec3b[dst.width * dst.height];
+
+
+        for (var i = 0; i < dst.height; i++)
         {
-            for (var j = 0; j < 224; j++)
+            for (var j = 0; j < dst.width; j++)
             {
                 var col = c[j + i * 224];
                 var vec3 = new Vec3b
@@ -348,7 +342,7 @@ public class MotionData : MonoBehaviour
                     Item1 = col.g,
                     Item2 = col.r
                 };
-                videoSourceImageData[j + i * 224] = vec3;
+                videoSourceImageData[j + i * dst.width] = vec3;
             }
         }
         m.SetArray(0, 0, videoSourceImageData);
@@ -366,7 +360,7 @@ public class MotionData : MonoBehaviour
     /// <returns></returns>
     protected JointPoint[] GetRigData(Mat imgMat)
     {
-        var blob = CvDnn.BlobFromImage(imgMat, 1.0 / 255.0, new OpenCvSharp.Size(inputImageSize, inputImageSize), 0.0, false, false);
+        Mat blob = CvDnn.BlobFromImage(imgMat, 1.0 / 255.0, new OpenCvSharp.Size(inputImageSize, inputImageSize), 0.0, false, false);
         Onnx.SetInput(blob);
         Onnx.Forward(outputs, new string[] { "369", "373", "361", "365" });
 
@@ -462,7 +456,7 @@ public class MotionData : MonoBehaviour
     /// <summary>
     /// Update Final pos Every frame
     /// </summary>
-    protected void UpdatePose()
+    protected void UpdatePoseData()
     {
         var forward = TriangleNormal(jointPoints[PositionIndex.hip.Int()].Pos3D, jointPoints[PositionIndex.lThighBend.Int()].Pos3D, jointPoints[PositionIndex.rThighBend.Int()].Pos3D);
         jointPoints[PositionIndex.hip.Int()].Transform.position = jointPoints[PositionIndex.hip.Int()].Pos3D * 0.01f + new Vector3(initPosition.x, 0f, initPosition.z);

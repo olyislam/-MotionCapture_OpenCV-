@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/MotionDataCapture.unity
-    guid: 36cff7d6b2b5ccf4e95d66f0d2896307
+    path: Assets/Scenes/MotionDataCapture 1.unity
+    guid: d04032961ee583540bf0b5ff0c2e3766
   m_configObjects: {}
