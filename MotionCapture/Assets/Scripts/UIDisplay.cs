@@ -20,4 +20,6 @@ public class UIDisplay : MonoBehaviour
         this.TotalHeight.text = "Total Height " + TotalHeight;
 
     }
+
+
 }

@@ -91,7 +91,7 @@ public class MotionData : MonoBehaviour
     }
     private void SetupImage_Mode()
     {
-        GameObject videoScreen = GameObject.Find("VideoScreen");
+        GameObject videoScreen = GameObject.Find("InputScreen");
         RawImage screen = videoScreen.GetComponent<RawImage>();
         var sd = screen.GetComponent<RectTransform>();
         screen.texture = ImageTexture;
@@ -107,7 +107,7 @@ public class MotionData : MonoBehaviour
         WebCamDevice[] devices = WebCamTexture.devices;
         webCamTexture = new WebCamTexture(devices[0].name);
 
-        GameObject videoScreen = GameObject.Find("VideoScreen");
+        GameObject videoScreen = GameObject.Find("InputScreen");
         RawImage screen = videoScreen.GetComponent<RawImage>();
         var sd = screen.GetComponent<RectTransform>();
         screen.texture = webCamTexture;
@@ -136,8 +136,6 @@ public class MotionData : MonoBehaviour
 
         texture = new Texture2D(videoTexture.width, videoTexture.height);
 
-
-        Debug.Log("height" + videoPlayer.clip.height / videoPlayer.clip.width + " x " + videoPlayer.clip.width+ " y " + videoPlayer.clip.height);
     }
 
 
@@ -266,7 +264,7 @@ public class MotionData : MonoBehaviour
         {
             if (ImageTexture == null)
                 return null;
-            
+            texture = ImageTexture;
             return texture;
         }
 

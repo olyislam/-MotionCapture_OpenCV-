@@ -110,6 +110,10 @@ public class SubRig
 
 public class Rig
 {
+    private float Realworld_Ratio = 13f;
+    public float Convert_To_Inch => Realworld_Ratio;
+    public float Convert_To_Feet => Realworld_Ratio / 12 ;
+
 
     //World Anchore Data
 
